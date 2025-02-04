@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Editor - {{ file_id }}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.34.0/min/vs/loader.js"></script>
+</head>
+
+<style>
+ /* Changed class name to avoid Bootstrap conflict */
+ .custom-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    background-color: rgba(0, 0, 0, 0.4); /* Overlay effect */
+    z-index: 1;
+}
+
+.custom-modal-content {
+    background-color: #393939;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 300px;
+    position: absolute; /* Position relative to the modal overlay */
+    right: 20px; /* 20px from the right edge */
+    top: 60px; /* 60px from the top */
+    color: #fff;
+}
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+    color: rgb(251, 245, 245);
+    cursor: pointer;
+}
+
+
+</style>
+
+<body>
+    <nav class="navbar navbar-dark bg-dark navbar-expand-lg">
+        <div class="container-fluid">
+            <a class="navbar-brand me-4" href="/">CodeShare</a>
+            
+            <div class="d-flex flex-grow-1 align-items-center justify-content-end">
+                <!-- Save & Share Form -->
+                <form action="/editor/{{ file_id }}" method="POST" id="codeForm" class="me-2">
+                    <input type="hidden" name="code" id="codeInput">
+                    <button type="submit" class="btn btn-success">Share</button>
+                </form>
+    
+                <!-- Login/Logout Button -->
+                <div class="ms-2">
+                    {% if current_user.is_authenticated %}
+                        <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
+                    {% else %}
+                        <a href="{{ url_for('login') }}" class="btn btn-success">Login</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Modal -->
+    <div id="myModal" class="custom-modal">
+        <div class="custom-modal-content">
+            <span class="close">&times;</span>
+            <h2>Share Code</h2>
+            <p>Anyone with access to this URL will see your code in real time.</p>
+            <label for="share-url">Share this URL</label>
+            <input type="text" id="share-url" value="{{ request.url }}" readonly>
+            <button class="copy-btn">📋</button>
+            <div class="view-only">
+            </div>
+        </div>
+    </div>
+
+    <div id="editor"></div>
+
+    <script>
+        var editor;
+    var saveTimeout;  // Variable to store the timeout function
+
+    require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.34.0/min/vs' }});
+    require(["vs/editor/editor.main"], function() {
+        editor = monaco.editor.create(document.getElementById("editor"), {
+            value: `{{ code | safe }}`,
+            theme: "vs-dark",
+            language: "javascript",
+            automaticLayout: true
+        });
+
+        // Track content change
+        editor.onDidChangeModelContent(function() {
+            // Clear the previous timeout (if any) to reset the timer
+            clearTimeout(saveTimeout);
+
+            // Set a new timeout to save the code after 1 second of no changes
+            saveTimeout = setTimeout(function() {
+                var code = editor.getValue(); // Get the code from the editor
+
+                fetch("/editor/{{ file_id }}", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ code: code }), // Send the code as JSON
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log("Code saved:", data);
+                })
+                .catch(error => {
+                    console.error("Error saving code:", error);
+                });
+            }, 1000); // Wait 1 second (1000 ms) after the last change
+        });
+    });
+
+        // Open the modal when the form is submitted
+        document.getElementById("codeForm").addEventListener("submit", function(event) {
+            event.preventDefault(); // Prevent form submission
+
+            // Show the modal
+            var modal = document.getElementById("myModal");
+            modal.style.display = "block";
+        });
+
+        // Close the modal when the user clicks on the close button (x)
+        document.querySelector(".close").addEventListener("click", function() {
+            var modal = document.getElementById("myModal");
+            modal.style.display = "none";
+        });
+
+        // Close the modal if the user clicks outside of the modal
+        window.onclick = function(event) {
+            var modal = document.getElementById("myModal");
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        };
+
+        // Copy the URL when the "Copy" button is clicked
+        document.querySelector(".copy-btn").addEventListener("click", function() {
+            var urlInput = document.getElementById("share-url");
+            urlInput.select();
+            document.execCommand("copy");
+        });
+
+        // Close modal when clicking outside the content
+        window.onclick = function(event) {
+            var modal = document.getElementById("myModal");
+            var modalContent = document.querySelector(".custom-modal-content");
+            
+            // Check if the click is outside the modal content AND within the modal overlay
+            if (event.target === modal && !modalContent.contains(event.target)) {
+                modal.style.display = "none";
+            }
+        };
+        
+    </script>
+</body>
+</html>
