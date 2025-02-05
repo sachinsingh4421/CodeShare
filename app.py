@@ -52,7 +52,10 @@ def user_codes():
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
+<<<<<<< HEAD
     # If the user is already logged in, redirect to the homepage
+=======
+>>>>>>> 3de19bb (vcv)
     if current_user.is_authenticated:
         return redirect(url_for("index"))
 
@@ -63,7 +66,10 @@ def register():
         conn = get_db_connection()
         cur = conn.cursor()
 
+<<<<<<< HEAD
         # Check if the username already exists
+=======
+>>>>>>> 3de19bb (vcv)
         cur.execute("SELECT id FROM users WHERE username = ?", (username,))
         existing_user = cur.fetchone()
 
@@ -84,7 +90,10 @@ def register():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
+<<<<<<< HEAD
     # If the user is already logged in, redirect to the homepage
+=======
+>>>>>>> 3de19bb (vcv)
     if current_user.is_authenticated:
         return redirect(url_for("index"))
 
@@ -100,7 +109,6 @@ def login():
 
         if user and bcrypt.check_password_hash(user["password"], password):
             login_user(User(user["id"], username))
-            flash("Logged in successfully!", "success")
             return redirect(url_for("index"))
         else:
             flash("Invalid username or password.", "danger")
@@ -111,7 +119,6 @@ def login():
 @login_required
 def logout():
     logout_user()
-    flash("Logged out successfully!", "info")
     return redirect(url_for("login"))
 
 @app.route("/new")
