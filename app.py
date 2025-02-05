@@ -50,22 +50,33 @@ def user_codes():
 
     return render_template("codes.html", user_files=user_files)
 
-
 @app.route("/register", methods=["GET", "POST"])
 def register():
+    # If the user is already logged in, redirect to the homepage
+    if current_user.is_authenticated:
+        return redirect(url_for("index"))
+
     if request.method == "POST":
         username = request.form["username"]
         password = bcrypt.generate_password_hash(request.form["password"]).decode("utf-8")
 
         conn = get_db_connection()
         cur = conn.cursor()
+
+        # Check if the username already exists
+        cur.execute("SELECT id FROM users WHERE username = ?", (username,))
+        existing_user = cur.fetchone()
+
+        if existing_user:
+            flash("Username already exists", "danger")
+            conn.close()
+            return redirect(url_for("register"))
+
         try:
             cur.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, password))
             conn.commit()
             flash("Account created! Please log in.", "success")
             return redirect(url_for("login"))
-        except sqlite3.IntegrityError:
-            flash("Username already exists.", "danger")
         finally:
             conn.close()
 
@@ -73,6 +84,10 @@ def register():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
+    # If the user is already logged in, redirect to the homepage
+    if current_user.is_authenticated:
+        return redirect(url_for("index"))
+
     if request.method == "POST":
         username = request.form["username"]
         password = request.form["password"]
