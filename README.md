@@ -5,6 +5,8 @@ A web-based text editor application built with Flask that allows users to create
 ## Live Demo
 Visit the project: [https://codeshareapp.onrender.com](https://codeshareapp.onrender.com)
 
+![Alt text](static/codeshare.png)
+
 ## Features
 
 - User Authentication System
