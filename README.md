@@ -3,7 +3,7 @@
 A web-based text editor application built with Flask that allows users to create, edit, and save code snippets with real-time autosave functionality.
 
 ## Live Demo
-Visit the project: [https://codeshareapp.onrender.com](https://codeshareapp.onrender.com)
+Visit the project: [https://codeshareapp.onrender.com](https://sniplinkapp.onrender.com/)
 
 ![Alt text](static/codeshare.png)
 
